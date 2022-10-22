@@ -1,0 +1,26 @@
+{
+  "name": "entity-travel",
+  "version": "1.0.0",
+  "description": "myntex coding challenge",
+  "main": "index.js",
+  "scripts": {
+    "test": "npm test"
+  },
+  "author": "Anthony Ebin",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/chalk-animation": "^1.6.1",
+    "@types/figlet": "^1.5.5",
+    "@types/gradient-string": "^1.1.2",
+    "@types/inquirer": "^9.0.2",
+    "typescript": "^4.8.4"
+  },
+  "dependencies": {
+    "chalk": "^5.1.2",
+    "chalk-animation": "^2.0.3",
+    "figlet": "^1.5.2",
+    "gradient-string": "^2.0.2",
+    "inquirer": "^9.1.4",
+    "nanospinner": "^1.1.0"
+  }
+}
