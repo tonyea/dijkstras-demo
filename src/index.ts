@@ -3,8 +3,6 @@ import chalk from "chalk";
 import inquirer from "inquirer";
 import { createSpinner } from "nanospinner";
 
-const sleep = (ms = 2000) => new Promise((r) => setTimeout(r, ms));
-
 type CityCode = "CGY" | "CI" | "K" | "M" | "NYC" | "P" | "RI" | "RO" | "TO";
 
 type City = {
@@ -19,7 +17,6 @@ const welcome = async (cities: City[], routes: Route[]) => {
     "Welcome to Earth in a parallel universe\n"
   );
 
-  await sleep();
   rainbowTitle.stop();
 
   console.log(`
@@ -205,10 +202,6 @@ const handleAnswer = async (
 ) => {
   const spinner = createSpinner("Checking answer...").start();
 
-  await sleep();
-
-  spinner.stop();
-
   const graph = createGraph(origin, homeCity, destination, routes, cities);
   const solution = dijkstra(graph);
 
@@ -220,6 +213,9 @@ const handleAnswer = async (
     .replace("finish", destination)}
   Travel duration: ${solution.distance} hours
   `;
+
+  spinner.stop();
+
   if (solution.distance <= timeLimit) await completion(true, solutionMessage);
   // No route found within time limit
   else await completion(false, solutionMessage);
@@ -280,4 +276,4 @@ const main = async () => {
   await handleAnswer(homeCity, origin, destination, timeLimit, routes, cities);
 };
 
-main();
+await main();

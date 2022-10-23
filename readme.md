@@ -1,6 +1,12 @@
 # Demo of Dijkstra's Algo
 
-- Travel Permutations From Origin to Destination:
+
+## Demo
+  ![](demo/1.png)
+  ![](demo/2.png)
+  ![](demo/3.png)
+
+## Travel Permutations From Origin to Destination:
   - Rio de Janeiro
     - New York City
     - Chichen Itza
@@ -30,7 +36,7 @@
     - Calgary
   - Toronto
     - New York City
-- Requirements
+## Requirements
   - Travelling from one city to another, with each of the routes listed above, takes exactly 1 hour.
   - If you want to travel to a city not available at your current city terminal, you would have to transfer
   - Each transfer route also takes exactly 1 hour
@@ -47,3 +53,7 @@
   - Display list of cities that will be visited from start to finish. List out each city in order and the total travel time
   - Display the shortest route possible between the two cities
 
+
+## Concessions
+- App is bloated due UI packages installed
+- Unit testing foregone

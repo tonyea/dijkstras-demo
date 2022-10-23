@@ -2,10 +2,8 @@ import chalkAnimation from "chalk-animation";
 import chalk from "chalk";
 import inquirer from "inquirer";
 import { createSpinner } from "nanospinner";
-const sleep = (ms = 2000) => new Promise((r) => setTimeout(r, ms));
 const welcome = async (cities, routes) => {
     const rainbowTitle = chalkAnimation.rainbow("Welcome to Earth in a parallel universe\n");
-    await sleep();
     rainbowTitle.stop();
     console.log(`
 ${chalk.bgBlue("INSTRUCTIONS")}
@@ -125,15 +123,13 @@ ${message}
     }
     else {
         console.log(`
-${chalk.bgRed("NO route was found")}
+${chalk.bgRed("NO route was found within the time limit specified")}
 ${message}
         `);
     }
 };
 const handleAnswer = async (homeCity, origin, destination, timeLimit, routes, cities) => {
     const spinner = createSpinner("Checking answer...").start();
-    await sleep();
-    spinner.stop();
     const graph = createGraph(origin, homeCity, destination, routes, cities);
     const solution = dijkstra(graph);
     // If route time is less than time limit then route found within time limit
@@ -144,6 +140,7 @@ const handleAnswer = async (homeCity, origin, destination, timeLimit, routes, ci
         .replace("finish", destination)}
   Travel duration: ${solution.distance} hours
   `;
+    spinner.stop();
     if (solution.distance <= timeLimit)
         await completion(true, solutionMessage);
     // No route found within time limit
@@ -193,5 +190,5 @@ const main = async () => {
     const timeLimit = await timeLimitQuestion();
     await handleAnswer(homeCity, origin, destination, timeLimit, routes, cities);
 };
-main();
+await main();
 //# sourceMappingURL=index.js.map
