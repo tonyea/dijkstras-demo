@@ -33,44 +33,48 @@ const timeLimitQuestion = async () => {
     });
     return answer.limit;
 };
+// interface INodeCosts {
+//   start: INodeNeighborCost;
+//   [key: string]: INodeNeighborCost;
+//   finish: INodeNeighborCost;
+// }
 // Each key has an object for its value, which represents the immediate neighbors and the cost of reaching that neighbor.
-const getCostOfReachingDestination = (routes, origin, homeCity) => {
-    return Object.assign(routes
+const getCostOfReachingDestination = (routes, origin, destination, homeCity) => {
+    return routes
         .filter((r) => r[0] === origin)
-        .map((r) => ({ [r[1]]: homeCity === r[1] ? 1 : 2 }))); // 2 hours if not home city
+        .map((r) => ({ [r[1]]: homeCity === r[1] ? 1 : 2 })) // 2 hours if not home city
+        .reduce((map, obj) => {
+        // takes [{CI: 1}, {K:2}, {TO:2}] converts it to {CI: 1, K:2, TO:2}
+        const cost = obj[Object.keys(obj)[0]];
+        if (Object.keys(obj)[0] === destination)
+            map["finish"] = cost;
+        else
+            map[Object.keys(obj)[0]] = cost;
+        return map;
+    }, {});
 };
-const createGraph = (origin, homeCity, destination, routes) => {
+const createGraph = (origin, homeCity, destination, routes, cities) => {
     // get cost of start node
-    const start = getCostOfReachingDestination(routes, origin, homeCity);
-    let test = [];
-    // get cost of intermediate nodes
-    for (const route of routes) {
-        if (route[0] === origin)
-            continue; // skip start
-        if (route[0] === destination)
-            continue; // skip finish
-        const x = getCostOfReachingDestination(routes, route[0], homeCity);
-        test.push({
-            [route[0]]: x,
-        });
-    }
+    const start = getCostOfReachingDestination(routes, origin, destination, homeCity);
     // set graph
-    console.log("TBDT", start, destination, JSON.stringify(test));
+    const graph = { start };
+    // get cost of intermediate nodes
+    const intermediateCities = cities.filter((c) => c.code !== origin && c.code !== destination); // skip start and finish
+    for (const city of intermediateCities) {
+        const nodeCost = getCostOfReachingDestination(routes, city.code, destination, homeCity);
+        const costObj = { [city.code]: nodeCost };
+        Object.assign(graph, costObj);
+    }
+    Object.assign(graph, { finish: {} });
+    return graph;
 };
-const handleAnswer = async (homeCity, origin, destination, _timeLimit, routes) => {
+const handleAnswer = async (homeCity, origin, destination, _timeLimit, routes, cities) => {
     const spinner = createSpinner("Checking answer...").start();
     //   await sleep();
     spinner.stop();
-    createGraph(origin, homeCity, destination, routes);
-    // iterate through routes and add time to travel through
-    //   const timeTravelled = calculateTimeTravelled(
-    //     origin,
-    //     origin,
-    //     destination,
-    //     homeCity,
-    //     routes
-    //   );
-    //   console.log("TIME TRAVELLED", timeTravelled);
+    // TODO: if origin === destination then return or throw;
+    const graph = createGraph(origin, homeCity, destination, routes, cities);
+    console.log("TIME GRAPH", graph);
     // If route time is less than time limit then route found within time limit
     //   if (timeTravelled <= timeLimit) await completion(true);
     //   // No route found within time limit
@@ -118,7 +122,7 @@ const main = async () => {
     const destination = await getCityCode(cities.map((c) => c.code), "Arrive in?");
     const timeLimit = await timeLimitQuestion();
     console.log("TBDT", homeCity, origin, destination, timeLimit);
-    await handleAnswer(homeCity, origin, destination, timeLimit, routes);
+    await handleAnswer(homeCity, origin, destination, timeLimit, routes, cities);
 };
 main();
 // (async () => {
