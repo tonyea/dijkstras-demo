@@ -2,9 +2,10 @@ import chalkAnimation from "chalk-animation";
 import chalk from "chalk";
 import inquirer from "inquirer";
 import { createSpinner } from "nanospinner";
+const sleep = (ms = 2000) => new Promise((r) => setTimeout(r, ms));
 const welcome = async (cities, routes) => {
     const rainbowTitle = chalkAnimation.rainbow("Welcome to Earth in a parallel universe\n");
-    //   await sleep();
+    await sleep();
     rainbowTitle.stop();
     console.log(`
 ${chalk.bgBlue("INSTRUCTIONS")}
@@ -33,11 +34,6 @@ const timeLimitQuestion = async () => {
     });
     return answer.limit;
 };
-// interface INodeCosts {
-//   start: INodeNeighborCost;
-//   [key: string]: INodeNeighborCost;
-//   finish: INodeNeighborCost;
-// }
 // Each key has an object for its value, which represents the immediate neighbors and the cost of reaching that neighbor.
 const getCostOfReachingDestination = (routes, origin, destination, homeCity) => {
     return routes
@@ -57,7 +53,7 @@ const createGraph = (origin, homeCity, destination, routes, cities) => {
     // get cost of start node
     const start = getCostOfReachingDestination(routes, origin, destination, homeCity);
     // set graph
-    const graph = { start };
+    const graph = { start, finish: {} };
     // get cost of intermediate nodes
     const intermediateCities = cities.filter((c) => c.code !== origin && c.code !== destination); // skip start and finish
     for (const city of intermediateCities) {
@@ -65,20 +61,94 @@ const createGraph = (origin, homeCity, destination, routes, cities) => {
         const costObj = { [city.code]: nodeCost };
         Object.assign(graph, costObj);
     }
-    Object.assign(graph, { finish: {} });
     return graph;
 };
-const handleAnswer = async (homeCity, origin, destination, _timeLimit, routes, cities) => {
+const lowestCostNode = (costs, processed) => {
+    return Object.keys(costs).reduce((lowest, node) => {
+        if (lowest === "" || costs[node] < costs[lowest]) {
+            if (!processed.includes(node)) {
+                lowest = node;
+            }
+        }
+        return lowest;
+    }, "");
+};
+// function that returns the minimum cost and path to reach Finish
+const dijkstra = (graph) => {
+    // track lowest cost to reach each node
+    const costs = Object.assign({ finish: Infinity }, graph.start);
+    // track paths
+    const parents = { finish: null };
+    for (let child in graph.start) {
+        parents[child] = "start";
+    }
+    // track nodes that have already been processed
+    const processed = [];
+    let node = lowestCostNode(costs, processed);
+    while (node) {
+        let cost = costs[node];
+        let children = graph[node];
+        for (let n in children) {
+            let newCost = cost + children[n];
+            if (!costs[n]) {
+                costs[n] = newCost;
+                parents[n] = node;
+            }
+            if (costs[n] > newCost) {
+                costs[n] = newCost;
+                parents[n] = node;
+            }
+        }
+        processed.push(node);
+        node = lowestCostNode(costs, processed);
+    }
+    let optimalPath = ["finish"];
+    let parent = parents.finish;
+    while (parent) {
+        optimalPath.push(parent);
+        parent = parents[parent];
+    }
+    optimalPath.reverse();
+    const results = {
+        distance: costs.finish,
+        path: optimalPath,
+    };
+    return results;
+};
+const completion = (isCorrect, message = "") => {
+    if (isCorrect) {
+        console.clear();
+        console.log(`
+${chalk.bgGreen("Success! A route was found")}
+${message}
+    `);
+    }
+    else {
+        console.log(`
+${chalk.bgRed("NO route was found")}
+${message}
+        `);
+    }
+};
+const handleAnswer = async (homeCity, origin, destination, timeLimit, routes, cities) => {
     const spinner = createSpinner("Checking answer...").start();
-    //   await sleep();
+    await sleep();
     spinner.stop();
-    // TODO: if origin === destination then return or throw;
     const graph = createGraph(origin, homeCity, destination, routes, cities);
-    console.log("TIME GRAPH", graph);
+    const solution = dijkstra(graph);
     // If route time is less than time limit then route found within time limit
-    //   if (timeTravelled <= timeLimit) await completion(true);
-    //   // No route found within time limit
-    //   else await completion(false);
+    const solutionMessage = `
+  Shortest Route: ${solution.path
+        .join(" to ")
+        .replace("start", origin)
+        .replace("finish", destination)}
+  Travel duration: ${solution.distance} hours
+  `;
+    if (solution.distance <= timeLimit)
+        await completion(true, solutionMessage);
+    // No route found within time limit
+    else
+        await completion(false, solutionMessage);
 };
 const main = async () => {
     const cities = [
@@ -118,20 +188,10 @@ const main = async () => {
     await welcome(cities, routes);
     const homeCity = await getCityCode(cities.map((c) => c.code), "Your home city?");
     const origin = await getCityCode(cities.map((c) => c.code), "Leaving from?");
-    // TODO: validate that you cannot travel to departure city
-    const destination = await getCityCode(cities.map((c) => c.code), "Arrive in?");
+    const destination = await getCityCode(cities.filter((c) => c.code !== origin).map((c) => c.code), // filter out origin city
+    "Arrive in?");
     const timeLimit = await timeLimitQuestion();
-    console.log("TBDT", homeCity, origin, destination, timeLimit);
     await handleAnswer(homeCity, origin, destination, timeLimit, routes, cities);
 };
 main();
-// (async () => {
-//     try {
-//         const text = await main();
-//         console.log(text);
-//     } catch (e) {
-//         // Deal with the fact the chain failed
-//     }
-//     // `text` is not available here
-// })();
 //# sourceMappingURL=index.js.map
